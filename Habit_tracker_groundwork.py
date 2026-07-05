@@ -20,7 +20,7 @@ def new_habit():
     Frequency = st.text_input("Frequency:", placeholder="(Daily, Weekly, Monthly)")
     Target_goal=st.text_input("Target Goal:", placeholder="Number of repititions")
     Category=st.text_input("Category:", placeholder="(Health, Productivity, Learning, etc.)")
-    date = st.date_input("Start date: ", value=None, max_value=datetime.date.today())
+    date = st.date_input("Start date: ", value=None)
     """
     Making the user input the habit details
     """
@@ -77,119 +77,123 @@ def stats():
     best_habit = ""
     
     for single in df['Habit'].unique():
-        streak=0
-        best_streak=0
-        successful_periods = 0
-        Start_Date=pd.to_datetime(df[df['Habit']==single]['Start_Date'].iloc[0]).date()
-        today=datetime.date.today()
-        total_days_passed=(today-Start_Date).days+1 #inclusive, so saturday-saturday will equal 1
-        Target=int(df.loc[df['Habit']==single ,'Target_Goal'].iloc[0])
-        Freq=df.loc[df['Habit']==single ,'Frequency'].iloc[0]
-        Habit_completion_full=pd.to_datetime(df[df['Habit']==single]['Completion'].iloc[1:])
-        Habit_completion_dates=Habit_completion_full.dt.normalize()
-        if Freq=='Daily':
-            total_periods=max(1,total_days_passed)
-            for count in Habit_completion_dates.value_counts():
-                if count>=Target:
-                    streak+=1
-                    best_streak=max(best_streak,streak)
-                    successful_periods+=1
-                else:
-                    best_streak=max(best_streak,streak)
-                    streak=0
-                
-        elif Freq=='Weekly':
-            total_periods=max(1,total_days_passed//7)
-            weeks=Habit_completion_dates.dt.to_period('W')
-            for count in weeks.value_counts():
-                if count>=Target:
-                    streak+=1
-                    best_streak=max(best_streak,streak)
-                    successful_periods+=1
-                else:
-                    best_streak=max(best_streak,streak)
-                    streak=0
-        
-        elif Freq=='Monthly':
-            total_periods=max(1,total_days_passed//30)
-            months=Habit_completion_dates.dt.to_period('M')
-            for count in months.value_counts():
-                if count>=Target:
-                    streak+=1
-                    best_streak=max(best_streak,streak)
-                    successful_periods+=1
-                else:
-                    best_streak=max(best_streak,streak)
-                    streak=0
-                
-        elif Freq=='Yearly':
-            total_periods=max(1,total_days_passed//365)
-            years=Habit_completion_dates.dt.to_period('Y')
-            for count in years.value_counts():
-                if count>=Target:
-                    streak+=1
-                    best_streak=max(best_streak,streak)
-                    successful_periods+=1
-                else:
-                    best_streak=max(best_streak,streak)
-                    streak=0
-        """
-        As the Frequency is inputted as either (Daily/Weekly/Monthly/Yearly) each one needs to convert the date to the appropiate format
-        example: Frequency=='Monthly', inputted Completion date is 4/7/2026
-                 dt.period('M') will change this format to 7/2026
-                 this will make it easier for value_counts() to count how many times a month the user completed.
-                 
-        For the completion rate calculation, the total days passed from the start date of the habit to the current date of the machine gets computed first.
-        After that the variable total_periods takes the bigger number between 1 (1 because if you started on the same day), or the total days passed divided 
-        by the days in the frequency (Monthly has 30 days...etc). 
-        for example: total_days_passed from Saturday to the same Saturday is object 0 (.days) will make change it to integer 0 (+1) so the same day is inclusive
-        so it equates to 1. let's say it is for the daily so total_period=1, if the target was 2, but the user only recorded once, the successful periods is             0. so for the completion rate=(0/1)*100 would be 0%
-        """
-        completion_rate=(successful_periods/total_periods)*100
-        if completion_rate>100:
-            completion_rate=100
-
-        if completion_rate > highest_rate:
-            highest_rate = completion_rate
-            best_habit = single
+        try:
+            streak=0
+            best_streak=0
+            successful_periods = 0
+            Start_Date=pd.to_datetime(df[df['Habit']==single]['Start_Date'].iloc[0]).date()
+            today=datetime.date.today()
+            total_days_passed=(today-Start_Date).days+1 #inclusive, so saturday-saturday will equal 1
+            Target=int(df.loc[df['Habit']==single ,'Target_Goal'].iloc[0])
+            Freq=df.loc[df['Habit']==single ,'Frequency'].iloc[0]
+            Habit_completion_full=pd.to_datetime(df[df['Habit']==single]['Completion'].iloc[1:])
+            Habit_completion_dates=Habit_completion_full.dt.normalize()
+            if Freq=='Daily':
+                total_periods=max(1,total_days_passed)
+                for count in Habit_completion_dates.value_counts():
+                    if count>=Target:
+                        streak+=1
+                        best_streak=max(best_streak,streak)
+                        successful_periods+=1
+                    else:
+                        best_streak=max(best_streak,streak)
+                        streak=0
+                    
+            elif Freq=='Weekly':
+                total_periods=max(1,total_days_passed//7)
+                weeks=Habit_completion_dates.dt.to_period('W')
+                for count in weeks.value_counts():
+                    if count>=Target:
+                        streak+=1
+                        best_streak=max(best_streak,streak)
+                        successful_periods+=1
+                    else:
+                        best_streak=max(best_streak,streak)
+                        streak=0
             
-        """
-        to get the best habit, heighest_rate=-1 and best_habit="" were initialized. so the habit in the first loop will always have a completion_rate higher             than the height_rate even if it is 0% as the heighest_rate is -1. after that in each iteration it will compare and pick the better one.
-        
-        """
-        st.write(f"{single} streak: {streak} | Best Streak: {best_streak} | Completion Rate: {completion_rate}%")
-        
-        total_logs = len(Habit_completion_dates)
-        st.write(f"* Calendar History: {total_logs} total completion entries recorded.")
-        if best_streak >= 5:
-            st.write("* Achievement Unlocked: Gold Level status reached.")
-        elif best_streak >= 2:
-            st.write("* Achievement Unlocked: Silver Level status reached.")
-        else:
-            st.write("* Achievement Unlocked: Bronze Level status reached.")
+            elif Freq=='Monthly':
+                total_periods=max(1,total_days_passed//30)
+                months=Habit_completion_dates.dt.to_period('M')
+                for count in months.value_counts():
+                    if count>=Target:
+                        streak+=1
+                        best_streak=max(best_streak,streak)
+                        successful_periods+=1
+                    else:
+                        best_streak=max(best_streak,streak)
+                        streak=0
+                    
+            elif Freq=='Yearly':
+                total_periods=max(1,total_days_passed//365)
+                years=Habit_completion_dates.dt.to_period('Y')
+                for count in years.value_counts():
+                    if count>=Target:
+                        streak+=1
+                        best_streak=max(best_streak,streak)
+                        successful_periods+=1
+                    else:
+                        best_streak=max(best_streak,streak)
+                        streak=0
+            """
+            As the Frequency is inputted as either (Daily/Weekly/Monthly/Yearly) each one needs to convert the date to the appropiate format
+            example: Frequency=='Monthly', inputted Completion date is 4/7/2026
+                     dt.period('M') will change this format to 7/2026
+                     this will make it easier for value_counts() to count how many times a month the user completed.
+                     
+            For the completion rate calculation, the total days passed from the start date of the habit to the current date of the machine gets computed first.
+            After that the variable total_periods takes the bigger number between 1 (1 because if you started on the same day), or the total days passed divided 
+            by the days in the frequency (Monthly has 30 days...etc). 
+            for example: total_days_passed from Saturday to the same Saturday is object 0 (.days) will make change it to integer 0 (+1) so the same day is inclusive
+            so it equates to 1. let's say it is for the daily so total_period=1, if the target was 2, but the user only recorded once, the successful periods is             0. so for the completion rate=(0/1)*100 would be 0%
+            """
+            completion_rate=(successful_periods/total_periods)*100
+            if completion_rate>100:
+                completion_rate=100
 
-        if today not in Habit_completion_full.dt.date.values:
-            st.toast(f"Reminder: Complete your '{single}' habit today!")
-            st.write("* Reminder Alert: This habit is still pending for today.")
-        else:
-            st.write("* Reminder Alert: Completed for today.")
-
-
-        if total_logs > 0:
-            morning_count = (Habit_completion_full.dt.hour < 12).sum()
-            evening_count = total_logs - morning_count
-            if morning_count >= evening_count:
-                st.write("* Optimal Time: Your best completion performance happens in the Morning.")
+            if completion_rate > highest_rate:
+                highest_rate = completion_rate
+                best_habit = single
+                
+            """
+            to get the best habit, heighest_rate=-1 and best_habit="" were initialized. so the habit in the first loop will always have a completion_rate higher             than the height_rate even if it is 0% as the heighest_rate is -1. after that in each iteration it will compare and pick the better one.
+            
+            """
+            st.write(f"{single} streak: {streak} | Best Streak: {best_streak} | Completion Rate: {completion_rate}%")
+            
+            total_logs = len(Habit_completion_dates)
+            st.write(f"* Calendar History: {total_logs} total completion entries recorded.")
+            if best_streak >= 5:
+                st.write("* Achievement Unlocked: Gold Level status reached.")
+            elif best_streak >= 2:
+                st.write("* Achievement Unlocked: Silver Level status reached.")
             else:
-                st.write("* Optimal Time: Your best completion performance happens in the Evening.")
-        else:
-            st.write("* Optimal Time: Not enough data yet.")
+                st.write("* Achievement Unlocked: Bronze Level status reached.")
 
-        st.write("---")
-        """
-        Optimal Time is when most completions for
-        this habit happened before noon, it's a Morning habit, otherwise Evening.
-        """
+            if today not in Habit_completion_full.dt.date.values:
+                st.toast(f"Reminder: Complete your '{single}' habit today!")
+                st.write("* Reminder Alert: This habit is still pending for today.")
+            else:
+                st.write("* Reminder Alert: Completed for today.")
+
+
+            if total_logs > 0:
+                morning_count = (Habit_completion_full.dt.hour < 12).sum()
+                evening_count = total_logs - morning_count
+                if morning_count >= evening_count:
+                    st.write("* Optimal Time: Your best completion performance happens in the Morning.")
+                else:
+                    st.write("* Optimal Time: Your best completion performance happens in the Evening.")
+            else:
+                st.write("* Optimal Time: Not enough data yet.")
+
+            st.write("---")
+            """
+            Optimal Time is when most completions for
+            this habit happened before noon, it's a Morning habit, otherwise Evening.
+            """
+        except Exception as e:
+            st.error(f"Something went wrong while computing stats for '{single}'. Error details below:")
+            st.exception(e)
         
     if best_habit != "":
         st.write("### Habit Stacking Suggestion:")
@@ -244,7 +248,7 @@ def modify():
             if 'Category' in details:
                 Category=st.text_input("Category:", placeholder="(Health, Productivity, Learning, etc.)")
             if 'Start_Date' in details:
-                Start_Date = st.date_input("Start date: ", value=None, max_value=datetime.date.today())
+                Start_Date = st.date_input("Start date: ", value=None)
             if 'Completion' in details:
                 completion_list=list(Habit_to_modify['Completion'].iloc[1:])
                 option = st.selectbox(
@@ -267,24 +271,40 @@ def modify():
             
         if st.button('Submit'):
             """
-            Only overwrite Start_Date if the user actually picked a new one.
+            Guard: if the user is changing Start_Date, make sure it isn't later
+            than any completion already logged for this habit. Otherwise stats()
+            would end up crediting completions that happened "before tracking
+            started", inflating the completion rate in a misleading way.
             """
-            if Start_Date is not None:
-                df.loc[df['Habit']==radio_selection,'Start_Date']=Start_Date
-            df.loc[df['Habit']==radio_selection,'Frequency']=Frequency
-            df.loc[df['Habit']==radio_selection,'Target_Goal']=Target_Goal
-            df.loc[df['Habit']==radio_selection,'Category']=Category
-            """
-            Same guard for Completion: only write if both a target row was
-            resolved AND a real timestamp was built, so leaving the new
-            date/time blank doesn't silently wipe an existing log entry.
-            """
-            if first_log_row is not None and Completion is not None:
-                df.loc[first_log_row, 'Completion'] = Completion
-            df.loc[df['Habit']==radio_selection,'Habit']=Habit_Name
-            df.to_csv('data/habit.csv',index=False)
-            st.success('Status Updated!', icon="✅")
-            st.rerun()
+            existing_completions = pd.to_datetime(Habit_to_modify['Completion'].iloc[1:]).dropna()
+            block_save = False
+            if Start_Date is not None and len(existing_completions) > 0:
+                earliest_completion = existing_completions.min().date()
+                if Start_Date > earliest_completion:
+                    st.warning(
+                        f"Can't set the start date to {Start_Date} — this habit already has a "
+                        f"completion logged on {earliest_completion}, which is before that. "
+                        f"Please pick a start date on or before {earliest_completion}."
+                    )
+                    block_save = True
+
+            if not block_save:
+                if Start_Date is not None:
+                    df.loc[df['Habit']==radio_selection,'Start_Date']=Start_Date
+                df.loc[df['Habit']==radio_selection,'Frequency']=Frequency
+                df.loc[df['Habit']==radio_selection,'Target_Goal']=Target_Goal
+                df.loc[df['Habit']==radio_selection,'Category']=Category
+                """
+                Same guard for Completion: only write if both a target row was
+                resolved AND a real timestamp was built, so leaving the new
+                date/time blank doesn't silently wipe an existing log entry.
+                """
+                if first_log_row is not None and Completion is not None:
+                    df.loc[first_log_row, 'Completion'] = Completion
+                df.loc[df['Habit']==radio_selection,'Habit']=Habit_Name
+                df.to_csv('data/habit.csv',index=False)
+                st.success('Status Updated!', icon="✅")
+                st.rerun()
 
 
 def All():

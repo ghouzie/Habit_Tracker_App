@@ -3,8 +3,9 @@ import streamlit as st
 import datetime
 
 df=pd.read_csv('data/habit.csv')
-
-
+if df['Habit'].isna().any():
+    df=df.dropna(subset='Habit')
+    df.to_csv('habit.csv',index=False)
 def option_menu():
     st.title('Habit Tracker')
     option = st.selectbox(
@@ -17,7 +18,10 @@ def option_menu():
 def new_habit():
     global df
     Habit_name = st.text_input("Habit name:", placeholder="Please enter the habit name")
-    Frequency = st.text_input("Frequency:", placeholder="(Daily, Weekly, Monthly)")
+    Frequency = st.selectbox(
+        "Please Select an Option",
+        ("Daily", "Weekly", "Monthly","Yearly"),
+    )
     Target_goal=st.text_input("Target Goal:", placeholder="Number of repititions")
     Category=st.text_input("Category:", placeholder="(Health, Productivity, Learning, etc.)")
     date = st.date_input("Start date: ", value=None)
@@ -25,10 +29,14 @@ def new_habit():
     Making the user input the habit details
     """
     if st.button('Save Habit'):
-        new_row={'Habit':Habit_name,'Frequency':Frequency,'Target_Goal':Target_goal,'Category':Category,'Start_Date':date,'Completion':pd.NaT}
-        df=pd.concat([df,pd.DataFrame([new_row])],ignore_index=True)
-        df.to_csv('data/habit.csv',index=False)
-        st.success('Habit Saved!', icon="✅")
+        if Habit_name in df['Habit']:
+            st.write('The habit is already in the data base')
+        else:
+            new_row={'Habit':Habit_name,'Frequency':Frequency,'Target_Goal':Target_goal,'Category':Category,'Start_Date':date,'Completion':pd.NaT}
+            df=pd.concat([df,pd.DataFrame([new_row])],ignore_index=True)
+            df.to_csv('data/habit.csv',index=False)
+            st.success('Habit Saved!', icon="✅")
+            st.rerun()
         
 def completion():
     global df
